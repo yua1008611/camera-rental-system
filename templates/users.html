@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block page_title %}用户管理{% endblock %}
+{% block page_subtitle %}添加、查看、修改和删除租赁用户{% endblock %}
+
+{% block content %}
+<section class="form-panel">
+    <h2>{{ "修改用户" if edit_user else "添加用户" }}</h2>
+    <form method="post" class="form-grid">
+        {% if edit_user %}
+            <input type="hidden" name="id" value="{{ edit_user.id }}">
+        {% endif %}
+        <label>
+            姓名
+            <input name="name" required value="{{ edit_user.name if edit_user else '' }}">
+        </label>
+        <label>
+            电话
+            <input name="phone" value="{{ edit_user.phone if edit_user else '' }}">
+        </label>
+        <label class="wide">
+            备注
+            <input name="note" value="{{ edit_user.note if edit_user else '' }}">
+        </label>
+        <div class="form-actions wide">
+            <button type="submit">{{ "保存修改" if edit_user else "添加用户" }}</button>
+            {% if edit_user %}
+                <a class="ghost-button" href="{{ url_for('users') }}">取消</a>
+            {% endif %}
+        </div>
+    </form>
+</section>
+
+<section class="panel">
+    <div class="panel-title"><h2>用户列表</h2></div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>姓名</th>
+                    <th>电话</th>
+                    <th>备注</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.name }}</td>
+                    <td>{{ user.phone or "-" }}</td>
+                    <td>{{ user.note or "-" }}</td>
+                    <td class="actions">
+                        <a class="small-button" href="{{ url_for('users', edit=user.id) }}">修改</a>
+                        <form method="post" action="{{ url_for('delete_user', user_id=user.id) }}" data-confirm="确定删除该用户吗？">
+                            <button class="danger-button" type="submit">删除</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="empty">暂无用户</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

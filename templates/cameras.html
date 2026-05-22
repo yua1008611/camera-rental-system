@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block page_title %}相机管理{% endblock %}
+{% block page_subtitle %}维护相机信息、日租金和设备状态{% endblock %}
+
+{% block content %}
+<section class="form-panel">
+    <h2>{{ "修改相机" if edit_camera else "添加相机" }}</h2>
+    <form method="post" class="form-grid">
+        {% if edit_camera %}
+            <input type="hidden" name="id" value="{{ edit_camera.id }}">
+        {% endif %}
+        <label>
+            品牌
+            <input name="brand" required value="{{ edit_camera.brand if edit_camera else '' }}">
+        </label>
+        <label>
+            型号
+            <input name="model" required value="{{ edit_camera.model if edit_camera else '' }}">
+        </label>
+        <label>
+            日租金
+            <input name="daily_price" type="number" min="0" step="0.01" required value="{{ edit_camera.daily_price if edit_camera else '' }}">
+        </label>
+        <label>
+            状态
+            <select name="status">
+                {% for status in ["可租", "已租", "维修中"] %}
+                    <option value="{{ status }}" {% if edit_camera and edit_camera.status == status %}selected{% endif %}>{{ status }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <div class="form-actions wide">
+            <button type="submit">{{ "保存修改" if edit_camera else "添加相机" }}</button>
+            {% if edit_camera %}
+                <a class="ghost-button" href="{{ url_for('cameras') }}">取消</a>
+            {% endif %}
+        </div>
+    </form>
+</section>
+
+<section class="panel">
+    <div class="panel-title"><h2>相机列表</h2></div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>品牌</th>
+                    <th>型号</th>
+                    <th>日租金</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for camera in cameras %}
+                <tr>
+                    <td>{{ camera.id }}</td>
+                    <td>{{ camera.brand }}</td>
+                    <td>{{ camera.model }}</td>
+                    <td>¥{{ camera.daily_price|money }}</td>
+                    <td>
+                        <span class="tag {{ 'ok' if camera.status == '可租' else 'danger' if camera.status == '已租' else 'warn' }}">
+                            {{ camera.status }}
+                        </span>
+                    </td>
+                    <td class="actions">
+                        <a class="small-button" href="{{ url_for('cameras', edit=camera.id) }}">修改</a>
+                        <form method="post" action="{{ url_for('delete_camera', camera_id=camera.id) }}" data-confirm="确定删除该相机吗？">
+                            <button class="danger-button" type="submit">删除</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="empty">暂无相机</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

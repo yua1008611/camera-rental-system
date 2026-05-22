@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block page_title %}统计页面{% endblock %}
+{% block page_subtitle %}查看收入、用户贡献、相机租赁次数和待处理订单{% endblock %}
+
+{% block content %}
+<section class="summary-grid two">
+    <div class="summary-card">
+        <span>总收入</span>
+        <strong>¥{{ total_income|money }}</strong>
+    </div>
+    <div class="summary-card">
+        <span>日期范围收入</span>
+        <strong>¥{{ range_income|money }}</strong>
+    </div>
+</section>
+
+<section class="form-panel compact">
+    <h2>按日期范围统计收入</h2>
+    <form method="get" class="form-grid">
+        <label>
+            开始日期
+            <input name="start_date" type="date" value="{{ start_date }}">
+        </label>
+        <label>
+            结束日期
+            <input name="end_date" type="date" value="{{ end_date }}">
+        </label>
+        <div class="form-actions">
+            <button type="submit">统计</button>
+            <a class="ghost-button" href="{{ url_for('stats') }}">清空</a>
+        </div>
+    </form>
+</section>
+
+<section class="split">
+    <div class="panel">
+        <div class="panel-title"><h2>按用户统计支付金额</h2></div>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>用户</th><th>订单数</th><th>支付金额</th></tr></thead>
+                <tbody>
+                    {% for row in by_user %}
+                    <tr>
+                        <td>{{ row.name }}</td>
+                        <td>{{ row.rental_count }}</td>
+                        <td>¥{{ row.total_paid|money }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="3" class="empty">暂无数据</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="panel">
+        <div class="panel-title"><h2>按相机统计租赁次数和收入</h2></div>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>相机</th><th>租赁次数</th><th>收入</th></tr></thead>
+                <tbody>
+                    {% for row in by_camera %}
+                    <tr>
+                        <td>{{ row.brand }} {{ row.model }}</td>
+                        <td>{{ row.rental_count }}</td>
+                        <td>¥{{ row.income|money }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="3" class="empty">暂无数据</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<section class="split">
+    <div class="panel">
+        <div class="panel-title"><h2>未支付订单</h2></div>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>用户</th><th>相机</th><th>应付</th><th>实付</th></tr></thead>
+                <tbody>
+                    {% for rental in unpaid %}
+                    <tr>
+                        <td>{{ rental.user_name }}</td>
+                        <td>{{ rental.brand }} {{ rental.model }}</td>
+                        <td>¥{{ rental.amount_due|money }}</td>
+                        <td>¥{{ rental.amount_paid|money }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4" class="empty">暂无未支付订单</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="panel">
+        <div class="panel-title"><h2>未归还订单</h2></div>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>用户</th><th>相机</th><th>结束日期</th><th>天数</th></tr></thead>
+                <tbody>
+                    {% for rental in unreturned %}
+                    <tr>
+                        <td>{{ rental.user_name }}</td>
+                        <td>{{ rental.brand }} {{ rental.model }}</td>
+                        <td>{{ rental.end_date }}</td>
+                        <td>{{ rental.rental_days }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4" class="empty">暂无未归还订单</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block page_title %}租赁订单{% endblock %}
+{% block page_subtitle %}创建订单并自动计算租赁天数与应付金额{% endblock %}
+
+{% block content %}
+<section class="form-panel">
+    <h2>{{ "修改订单" if edit_rental else "创建租赁订单" }}</h2>
+    <form method="post" class="form-grid rental-form">
+        {% if edit_rental %}
+            <input type="hidden" name="id" value="{{ edit_rental.id }}">
+        {% endif %}
+        <label>
+            用户
+            <select name="user_id" required>
+                <option value="">请选择用户</option>
+                {% for user in users %}
+                    <option value="{{ user.id }}" {% if edit_rental and edit_rental.user_id == user.id %}selected{% endif %}>{{ user.name }} {{ user.phone or "" }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            相机
+            <select name="camera_id" required id="cameraSelect">
+                <option value="">请选择相机</option>
+                {% for camera in cameras %}
+                    <option
+                        value="{{ camera.id }}"
+                        data-price="{{ camera.daily_price }}"
+                        data-status="{{ camera.status }}"
+                        {% if edit_rental and edit_rental.camera_id == camera.id %}selected{% endif %}
+                    >
+                        {{ camera.brand }} {{ camera.model }} / ¥{{ camera.daily_price|money }} / {{ camera.status }}
+                    </option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            开始日期
+            <input id="startDate" name="start_date" type="date" required value="{{ edit_rental.start_date if edit_rental else today }}">
+        </label>
+        <label>
+            结束日期
+            <input id="endDate" name="end_date" type="date" required value="{{ edit_rental.end_date if edit_rental else today }}">
+        </label>
+        <label>
+            租赁天数
+            <input id="rentalDays" readonly value="{{ edit_rental.rental_days if edit_rental else 1 }}">
+        </label>
+        <label>
+            应付金额
+            <input id="amountDue" readonly value="{{ edit_rental.amount_due|money if edit_rental else '0.00' }}">
+        </label>
+        <label>
+            实付金额
+            <input name="amount_paid" type="number" min="0" step="0.01" value="{{ edit_rental.amount_paid if edit_rental else 0 }}">
+        </label>
+        <label>
+            支付状态
+            <select name="payment_status">
+                {% for status in ["已支付", "未支付"] %}
+                    <option value="{{ status }}" {% if edit_rental and edit_rental.payment_status == status %}selected{% endif %}>{{ status }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            归还状态
+            <select name="return_status">
+                {% for status in ["已归还", "未归还"] %}
+                    <option value="{{ status }}" {% if edit_rental and edit_rental.return_status == status %}selected{% endif %}>{{ status }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <div class="form-actions wide">
+            <button type="submit">{{ "保存修改" if edit_rental else "创建订单" }}</button>
+            {% if edit_rental %}
+                <a class="ghost-button" href="{{ url_for('rentals') }}">取消</a>
+            {% endif %}
+        </div>
+    </form>
+</section>
+
+<section class="panel">
+    <div class="panel-title"><h2>订单列表</h2></div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>用户</th>
+                    <th>相机</th>
+                    <th>日期</th>
+                    <th>天数</th>
+                    <th>应付</th>
+                    <th>实付</th>
+                    <th>支付</th>
+                    <th>归还</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rental in rentals %}
+                <tr>
+                    <td>{{ rental.id }}</td>
+                    <td>{{ rental.user_name }}</td>
+                    <td>{{ rental.brand }} {{ rental.model }}</td>
+                    <td>{{ rental.start_date }} 至 {{ rental.end_date }}</td>
+                    <td>{{ rental.rental_days }}</td>
+                    <td>¥{{ rental.amount_due|money }}</td>
+                    <td>¥{{ rental.amount_paid|money }}</td>
+                    <td><span class="tag {{ 'ok' if rental.payment_status == '已支付' else 'warn' }}">{{ rental.payment_status }}</span></td>
+                    <td><span class="tag {{ 'ok' if rental.return_status == '已归还' else 'danger' }}">{{ rental.return_status }}</span></td>
+                    <td class="actions">
+                        <a class="small-button" href="{{ url_for('rentals', edit=rental.id) }}">修改</a>
+                        <form method="post" action="{{ url_for('delete_rental', rental_id=rental.id) }}" data-confirm="确定删除该订单吗？">
+                            <button class="danger-button" type="submit">删除</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="10" class="empty">暂无订单</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

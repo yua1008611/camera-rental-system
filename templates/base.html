@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ title or "相机租赁统计系统" }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="brand">
+            <span class="brand-icon">CR</span>
+            <div>
+                <strong>相机租赁</strong>
+                <small>统计系统</small>
+            </div>
+        </div>
+        <nav>
+            <a href="{{ url_for('index') }}" class="{{ 'active' if request.endpoint == 'index' else '' }}">首页</a>
+            <a href="{{ url_for('users') }}" class="{{ 'active' if request.endpoint == 'users' else '' }}">用户管理</a>
+            <a href="{{ url_for('cameras') }}" class="{{ 'active' if request.endpoint == 'cameras' else '' }}">相机管理</a>
+            <a href="{{ url_for('rentals') }}" class="{{ 'active' if request.endpoint == 'rentals' else '' }}">租赁订单</a>
+            <a href="{{ url_for('stats') }}" class="{{ 'active' if request.endpoint == 'stats' else '' }}">统计页面</a>
+        </nav>
+    </aside>
+
+    <main class="main">
+        <header class="topbar">
+            <div>
+                <h1>{% block page_title %}相机租赁统计系统{% endblock %}</h1>
+                <p>{% block page_subtitle %}记录订单、收入与设备状态{% endblock %}</p>
+            </div>
+        </header>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="flash">
+                    {% for message in messages %}
+                        <span>{{ message }}</span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block page_title %}首页{% endblock %}
+{% block page_subtitle %}快速查看订单、收入和待处理事项{% endblock %}
+
+{% block content %}
+<section class="summary-grid">
+    <div class="summary-card">
+        <span>总订单数</span>
+        <strong>{{ stats.total_orders }}</strong>
+    </div>
+    <div class="summary-card">
+        <span>总收入</span>
+        <strong>¥{{ stats.total_income|money }}</strong>
+    </div>
+    <div class="summary-card warning">
+        <span>未支付订单数</span>
+        <strong>{{ stats.unpaid_orders }}</strong>
+    </div>
+    <div class="summary-card danger">
+        <span>未归还订单数</span>
+        <strong>{{ stats.unreturned_orders }}</strong>
+    </div>
+</section>
+
+<section class="panel">
+    <div class="panel-title">
+        <h2>最近订单</h2>
+        <a class="link-button" href="{{ url_for('rentals') }}">新建订单</a>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>用户</th>
+                    <th>相机</th>
+                    <th>租期</th>
+                    <th>应付</th>
+                    <th>实付</th>
+                    <th>支付</th>
+                    <th>归还</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rental in recent_rentals %}
+                <tr>
+                    <td>{{ rental.user_name }}</td>
+                    <td>{{ rental.brand }} {{ rental.model }}</td>
+                    <td>{{ rental.start_date }} 至 {{ rental.end_date }}</td>
+                    <td>¥{{ rental.amount_due|money }}</td>
+                    <td>¥{{ rental.amount_paid|money }}</td>
+                    <td><span class="tag {{ 'ok' if rental.payment_status == '已支付' else 'warn' }}">{{ rental.payment_status }}</span></td>
+                    <td><span class="tag {{ 'ok' if rental.return_status == '已归还' else 'danger' }}">{{ rental.return_status }}</span></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="empty">暂无订单</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
