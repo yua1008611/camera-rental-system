@@ -126,6 +126,25 @@ def delete_user(user_id):
     return redirect(url_for("users"))
 
 
+@app.route("/rentals/users", methods=["POST"])
+def add_user_from_rentals():
+    db = get_db()
+    name = request.form["name"].strip()
+    phone = request.form.get("phone", "").strip()
+    note = request.form.get("note", "").strip()
+    if not name:
+        flash("请填写用户姓名。")
+        return redirect(url_for("rentals"))
+
+    cursor = db.execute(
+        "INSERT INTO users (name, phone, note) VALUES (?, ?, ?)",
+        (name, phone, note),
+    )
+    db.commit()
+    flash("用户已添加，可以直接创建订单。")
+    return redirect(url_for("rentals", user_id=cursor.lastrowid))
+
+
 @app.route("/cameras", methods=["GET", "POST"])
 def cameras():
     db = get_db()
@@ -253,6 +272,7 @@ def rentals():
     if edit_id:
         edit_rental = query_one("SELECT * FROM rentals WHERE id = ?", (edit_id,))
 
+    selected_user_id = request.args.get("user_id", "")
     users_list = query_all("SELECT * FROM users ORDER BY name")
     cameras_list = query_all("SELECT * FROM cameras ORDER BY brand, model")
     rental_list = query_all(
@@ -271,6 +291,7 @@ def rentals():
         cameras=cameras_list,
         rentals=rental_list,
         edit_rental=edit_rental,
+        selected_user_id=selected_user_id,
         today=today,
     )
 
