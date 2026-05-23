@@ -4,6 +4,30 @@
 {% block page_subtitle %}创建订单并自动计算租赁天数与应付金额{% endblock %}
 
 {% block content %}
+<section class="form-panel compact">
+    <div class="panel-title inline-title">
+        <h2>快速添加用户</h2>
+        <a class="small-button" href="{{ url_for('users') }}">管理已有用户</a>
+    </div>
+    <form method="post" action="{{ url_for('add_user_from_rentals') }}" class="form-grid quick-user-form">
+        <label>
+            姓名
+            <input name="name" required>
+        </label>
+        <label>
+            电话
+            <input name="phone">
+        </label>
+        <label>
+            备注
+            <input name="note">
+        </label>
+        <div class="form-actions">
+            <button type="submit">添加用户</button>
+        </div>
+    </form>
+</section>
+
 <section class="form-panel">
     <h2>{{ "修改订单" if edit_rental else "创建租赁订单" }}</h2>
     <form method="post" class="form-grid rental-form">
@@ -15,7 +39,7 @@
             <select name="user_id" required>
                 <option value="">请选择用户</option>
                 {% for user in users %}
-                    <option value="{{ user.id }}" {% if edit_rental and edit_rental.user_id == user.id %}selected{% endif %}>{{ user.name }} {{ user.phone or "" }}</option>
+                    <option value="{{ user.id }}" {% if (edit_rental and edit_rental.user_id == user.id) or (selected_user_id and selected_user_id|int == user.id) %}selected{% endif %}>{{ user.name }} {{ user.phone or "" }}</option>
                 {% endfor %}
             </select>
         </label>
