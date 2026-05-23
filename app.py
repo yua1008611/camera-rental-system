@@ -1,8 +1,8 @@
-import sqlite3
 import os
+import sqlite3
 from datetime import date, datetime
 
-from flask import Flask, flash, g, redirect, render_template, request, url_for
+from flask import Flask, flash, g, redirect, render_template, request, send_file, url_for
 
 from init_db import DB_PATH, init_database
 
@@ -355,6 +355,14 @@ def stats():
         start_date=start_date,
         end_date=end_date,
     )
+
+
+@app.route("/export-db")
+def export_db():
+    token = os.environ.get("EXPORT_TOKEN")
+    if not token or request.args.get("token") != token:
+        return "无权下载数据库", 403
+    return send_file(DB_PATH, as_attachment=True, download_name="camera_rental.db")
 
 
 if __name__ == "__main__":
