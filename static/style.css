@@ -183,6 +183,15 @@ h2 {
     box-shadow: none;
 }
 
+.form-panel.compact .panel-title {
+    padding: 0 0 16px;
+    border-bottom: 0;
+}
+
+.inline-title {
+    margin-bottom: 0;
+}
+
 .form-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(160px, 1fr));
@@ -192,6 +201,10 @@ h2 {
 
 .rental-form {
     grid-template-columns: repeat(3, minmax(180px, 1fr));
+}
+
+.quick-user-form {
+    grid-template-columns: 1.1fr 1fr 1.4fr auto;
 }
 
 label {
@@ -378,7 +391,7 @@ tbody tr:hover {
     }
 
     nav {
-        grid-template-columns: repeat(5, minmax(90px, 1fr));
+        grid-template-columns: repeat(4, minmax(90px, 1fr));
         overflow-x: auto;
     }
 
@@ -390,6 +403,7 @@ tbody tr:hover {
     .summary-grid.two,
     .form-grid,
     .rental-form,
+    .quick-user-form,
     .split {
         grid-template-columns: 1fr;
     }
