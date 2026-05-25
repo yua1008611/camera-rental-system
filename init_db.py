@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS cameras (
     model TEXT NOT NULL,
     daily_price REAL NOT NULL CHECK (daily_price >= 0),
     status TEXT NOT NULL DEFAULT '可租'
-        CHECK (status IN ('可租', '已租', '维修中'))
+        CHECK (status IN ('可租', '已租', '已预定', '维修中'))
 );
 
 CREATE TABLE IF NOT EXISTS rentals (
@@ -45,10 +45,41 @@ CREATE TABLE IF NOT EXISTS rentals (
 """
 
 
+def migrate_camera_status_values(conn):
+    row = conn.execute(
+        "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'cameras'"
+    ).fetchone()
+    if not row or "已预定" in row[0]:
+        return
+
+    conn.execute("PRAGMA foreign_keys = OFF")
+    conn.execute("DROP TABLE IF EXISTS cameras_new")
+    conn.executescript(
+        """
+        CREATE TABLE cameras_new (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            brand TEXT NOT NULL,
+            model TEXT NOT NULL,
+            daily_price REAL NOT NULL CHECK (daily_price >= 0),
+            status TEXT NOT NULL DEFAULT '可租'
+                CHECK (status IN ('可租', '已租', '已预定', '维修中'))
+        );
+
+        INSERT INTO cameras_new (id, brand, model, daily_price, status)
+        SELECT id, brand, model, daily_price, status FROM cameras;
+
+        DROP TABLE cameras;
+        ALTER TABLE cameras_new RENAME TO cameras;
+        """
+    )
+    conn.execute("PRAGMA foreign_keys = ON")
+
+
 def init_database():
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(DB_PATH) as conn:
         conn.executescript(SCHEMA)
+        migrate_camera_status_values(conn)
         conn.commit()
 
 
