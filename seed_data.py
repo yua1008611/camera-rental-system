@@ -40,17 +40,42 @@ def insert_rental(conn, user_id, camera_id, start, end, daily_price, paid, payme
 
 
 def sync_camera_status(conn):
+    today = date.today().isoformat()
     camera_ids = [row[0] for row in conn.execute("SELECT id FROM cameras")]
     for camera_id in camera_ids:
-        unreturned = conn.execute(
-            "SELECT COUNT(*) FROM rentals WHERE camera_id = ? AND return_status = '未归还'",
-            (camera_id,),
+        status = conn.execute("SELECT status FROM cameras WHERE id = ?", (camera_id,)).fetchone()[0]
+        if status == "维修中":
+            continue
+
+        active_unreturned = conn.execute(
+            """
+            SELECT COUNT(*)
+            FROM rentals
+            WHERE camera_id = ?
+              AND return_status = '未归还'
+              AND start_date <= ?
+            """,
+            (camera_id, today),
         ).fetchone()[0]
-        if unreturned:
+        if active_unreturned:
             conn.execute("UPDATE cameras SET status = '已租' WHERE id = ?", (camera_id,))
+            continue
+
+        future_unreturned = conn.execute(
+            """
+            SELECT COUNT(*)
+            FROM rentals
+            WHERE camera_id = ?
+              AND return_status = '未归还'
+              AND start_date > ?
+            """,
+            (camera_id, today),
+        ).fetchone()[0]
+        if future_unreturned:
+            conn.execute("UPDATE cameras SET status = '已预定' WHERE id = ?", (camera_id,))
         else:
             conn.execute(
-                "UPDATE cameras SET status = '可租' WHERE id = ? AND status = '已租'",
+                "UPDATE cameras SET status = '可租' WHERE id = ? AND status IN ('已租', '已预定')",
                 (camera_id,),
             )
 
