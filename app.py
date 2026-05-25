@@ -1,6 +1,6 @@
 import os
 import sqlite3
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from flask import Flask, flash, g, redirect, render_template, request, send_file, url_for
 
@@ -42,6 +42,22 @@ def calculate_rental(start_date, end_date, daily_price):
         raise ValueError("结束日期不能早于开始日期")
     amount_due = rental_days * float(daily_price)
     return rental_days, amount_due
+
+
+def booking_marker(start_date, end_date, today=None):
+    current_date = (
+        datetime.strptime(today, "%Y-%m-%d").date()
+        if isinstance(today, str)
+        else today or date.today()
+    )
+    start = datetime.strptime(start_date, "%Y-%m-%d").date()
+    end = datetime.strptime(end_date, "%Y-%m-%d").date()
+
+    if end == current_date:
+        return "今天结束"
+    if start == current_date + timedelta(days=1):
+        return "明天开始"
+    return ""
 
 
 def find_rental_conflict(camera_id, start_date, end_date, rental_id=None):
@@ -114,6 +130,7 @@ def money(value):
 
 
 app.jinja_env.filters["money"] = money
+app.jinja_env.globals["booking_marker"] = booking_marker
 init_database()
 
 
