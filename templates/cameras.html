@@ -50,6 +50,7 @@
                     <th>型号</th>
                     <th>日租金</th>
                     <th>状态</th>
+                    <th>租期/预定日期</th>
                     <th>操作</th>
                 </tr>
             </thead>
@@ -65,6 +66,21 @@
                             {{ camera.status }}
                         </span>
                     </td>
+                    <td>
+                        {% set bookings = bookings_by_camera.get(camera.id, []) %}
+                        {% if bookings %}
+                            <div class="booking-list">
+                                {% for booking in bookings %}
+                                    <div>
+                                        {{ booking.start_date }} 至 {{ booking.end_date }}
+                                        <span class="muted-text">({{ booking.user_name }})</span>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
                     <td class="actions">
                         <a class="small-button" href="{{ url_for('cameras', edit=camera.id) }}">修改</a>
                         <form method="post" action="{{ url_for('delete_camera', camera_id=camera.id) }}" data-confirm="确定删除该相机吗？">
@@ -73,7 +89,7 @@
                     </td>
                 </tr>
                 {% else %}
-                <tr><td colspan="6" class="empty">暂无相机</td></tr>
+                <tr><td colspan="7" class="empty">暂无相机</td></tr>
                 {% endfor %}
             </tbody>
         </table>
