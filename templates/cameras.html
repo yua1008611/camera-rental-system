@@ -71,8 +71,12 @@
                         {% if bookings %}
                             <div class="booking-list">
                                 {% for booking in bookings %}
-                                    <div>
+                                    {% set marker = booking_marker(booking.start_date, booking.end_date) %}
+                                    <div class="booking-item">
                                         {{ booking.start_date }} 至 {{ booking.end_date }}
+                                        {% if marker %}
+                                            <span class="reminder-tag {{ 'ending' if marker == '今天结束' else 'starting' }}">{{ marker }}</span>
+                                        {% endif %}
                                         <span class="muted-text">({{ booking.user_name }})</span>
                                     </div>
                                 {% endfor %}
