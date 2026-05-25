@@ -364,6 +364,16 @@ tbody tr:hover {
     text-align: center;
 }
 
+.muted-text {
+    color: var(--muted);
+}
+
+.booking-list {
+    display: grid;
+    gap: 5px;
+    line-height: 1.45;
+}
+
 .flash {
     display: grid;
     gap: 8px;
