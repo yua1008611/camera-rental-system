@@ -338,6 +338,11 @@ tbody tr:hover {
     background: #fef3c7;
 }
 
+.tag.reserve {
+    color: #1d4ed8;
+    background: #dbeafe;
+}
+
 .tag.danger {
     color: var(--red);
     background: #fee2e2;
