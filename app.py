@@ -228,8 +228,32 @@ def cameras():
     edit_id = request.args.get("edit")
     if edit_id:
         edit_camera = query_one("SELECT * FROM cameras WHERE id = ?", (edit_id,))
-    camera_list = query_all("SELECT * FROM cameras ORDER BY id DESC")
-    return render_template("cameras.html", cameras=camera_list, edit_camera=edit_camera)
+    today = date.today().isoformat()
+    cameras = query_all("SELECT * FROM cameras ORDER BY id DESC")
+    booking_rows = query_all(
+        """
+        SELECT
+            r.camera_id,
+            r.start_date,
+            r.end_date,
+            u.name AS user_name
+        FROM rentals r
+        JOIN users u ON u.id = r.user_id
+        WHERE r.return_status = '未归还'
+          AND r.end_date >= ?
+        ORDER BY r.camera_id, r.start_date
+        """,
+        (today,),
+    )
+    bookings_by_camera = {}
+    for row in booking_rows:
+        bookings_by_camera.setdefault(row["camera_id"], []).append(row)
+    return render_template(
+        "cameras.html",
+        cameras=cameras,
+        edit_camera=edit_camera,
+        bookings_by_camera=bookings_by_camera,
+    )
 
 
 @app.route("/cameras/<int:camera_id>/delete", methods=["POST"])
