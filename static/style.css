@@ -349,13 +349,17 @@ tbody tr:hover {
 }
 
 .actions {
-    display: flex;
-    gap: 8px;
-    align-items: center;
+    white-space: nowrap;
 }
 
 .actions form {
-    margin: 0;
+    display: inline-flex;
+    margin: 0 0 0 8px;
+    vertical-align: middle;
+}
+
+.actions .small-button {
+    vertical-align: middle;
 }
 
 .empty {
