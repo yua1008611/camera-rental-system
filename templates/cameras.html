@@ -25,7 +25,7 @@
         <label>
             状态
             <select name="status">
-                {% for status in ["可租", "已租", "维修中"] %}
+                {% for status in ["可租", "已租", "已预定", "维修中"] %}
                     <option value="{{ status }}" {% if edit_camera and edit_camera.status == status %}selected{% endif %}>{{ status }}</option>
                 {% endfor %}
             </select>
@@ -61,7 +61,7 @@
                     <td>{{ camera.model }}</td>
                     <td>¥{{ camera.daily_price|money }}</td>
                     <td>
-                        <span class="tag {{ 'ok' if camera.status == '可租' else 'danger' if camera.status == '已租' else 'warn' }}">
+                        <span class="tag {{ 'ok' if camera.status == '可租' else 'danger' if camera.status == '已租' else 'reserve' if camera.status == '已预定' else 'warn' }}">
                             {{ camera.status }}
                         </span>
                     </td>
