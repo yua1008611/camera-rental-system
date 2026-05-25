@@ -374,6 +374,33 @@ tbody tr:hover {
     line-height: 1.45;
 }
 
+.booking-item {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+
+.reminder-tag {
+    display: inline-flex;
+    align-items: center;
+    min-height: 22px;
+    padding: 0 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.reminder-tag.starting {
+    color: var(--green);
+    background: #dcfce7;
+}
+
+.reminder-tag.ending {
+    color: var(--red);
+    background: #fee2e2;
+}
+
 .flash {
     display: grid;
     gap: 8px;
