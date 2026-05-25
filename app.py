@@ -44,19 +44,69 @@ def calculate_rental(start_date, end_date, daily_price):
     return rental_days, amount_due
 
 
+def find_rental_conflict(camera_id, start_date, end_date, rental_id=None):
+    sql = """
+        SELECT r.*, u.name AS user_name
+        FROM rentals r
+        JOIN users u ON r.user_id = u.id
+        WHERE r.camera_id = ?
+          AND r.return_status = '未归还'
+          AND r.start_date <= ?
+          AND r.end_date >= ?
+    """
+    params = [camera_id, end_date, start_date]
+    if rental_id:
+        sql += " AND r.id != ?"
+        params.append(rental_id)
+    sql += " ORDER BY r.start_date LIMIT 1"
+    return query_one(sql, params)
+
+
 def sync_camera_status(camera_id):
     db = get_db()
-    unreturned = query_one(
-        "SELECT COUNT(*) AS total FROM rentals WHERE camera_id = ? AND return_status = '未归还'",
-        (camera_id,),
+    camera = query_one("SELECT status FROM cameras WHERE id = ?", (camera_id,))
+    if camera and camera["status"] == "维修中":
+        return
+
+    today = date.today().isoformat()
+    active_unreturned = query_one(
+        """
+        SELECT COUNT(*) AS total
+        FROM rentals
+        WHERE camera_id = ?
+          AND return_status = '未归还'
+          AND start_date <= ?
+        """,
+        (camera_id, today),
     )["total"]
-    if unreturned:
+    if active_unreturned:
         db.execute("UPDATE cameras SET status = '已租' WHERE id = ?", (camera_id,))
+        return
+
+    future_unreturned = query_one(
+        """
+        SELECT COUNT(*) AS total
+        FROM rentals
+        WHERE camera_id = ?
+          AND return_status = '未归还'
+          AND start_date > ?
+        """,
+        (camera_id, today),
+    )["total"]
+    if future_unreturned:
+        db.execute("UPDATE cameras SET status = '已预定' WHERE id = ?", (camera_id,))
     else:
         db.execute(
-            "UPDATE cameras SET status = '可租' WHERE id = ? AND status = '已租'",
+            "UPDATE cameras SET status = '可租' WHERE id = ? AND status IN ('已租', '已预定')",
             (camera_id,),
         )
+
+
+def sync_all_camera_status():
+    camera_ids = [row["id"] for row in query_all("SELECT id FROM cameras")]
+    for camera_id in camera_ids:
+        sync_camera_status(camera_id)
+    get_db().commit()
 
 
 def money(value):
@@ -69,6 +119,7 @@ init_database()
 
 @app.route("/")
 def index():
+    sync_all_camera_status()
     stats = {
         "total_orders": query_one("SELECT COUNT(*) AS total FROM rentals")["total"],
         "total_income": query_one("SELECT COALESCE(SUM(amount_paid), 0) AS total FROM rentals")["total"],
@@ -173,6 +224,7 @@ def cameras():
         db.commit()
         return redirect(url_for("cameras"))
 
+    sync_all_camera_status()
     edit_id = request.args.get("edit")
     if edit_id:
         edit_camera = query_one("SELECT * FROM cameras WHERE id = ?", (edit_id,))
@@ -205,15 +257,13 @@ def rentals():
             return redirect(url_for("rentals"))
 
         old_camera_id = None
+        if camera["status"] == "维修中":
+            flash("该相机正在维修中，不能创建租赁订单。")
+            return redirect(url_for("rentals"))
+
         if rental_id:
             old = query_one("SELECT * FROM rentals WHERE id = ?", (rental_id,))
             old_camera_id = old["camera_id"] if old else None
-            if old_camera_id and int(old_camera_id) != int(camera_id) and camera["status"] != "可租":
-                flash("新选择的相机当前不可租，请选择状态为“可租”的相机。")
-                return redirect(url_for("rentals"))
-        elif camera["status"] != "可租":
-            flash("该相机当前不可租，请选择状态为“可租”的相机。")
-            return redirect(url_for("rentals"))
 
         try:
             rental_days, amount_due = calculate_rental(
@@ -223,6 +273,19 @@ def rentals():
             )
         except ValueError as exc:
             flash(str(exc))
+            return redirect(url_for("rentals"))
+
+        conflict = find_rental_conflict(
+            camera_id,
+            request.form["start_date"],
+            request.form["end_date"],
+            rental_id,
+        )
+        if conflict:
+            flash(
+                f"该相机在 {conflict['start_date']} 至 {conflict['end_date']} "
+                f"已有未归还订单（用户：{conflict['user_name']}），请选择不重叠的日期。"
+            )
             return redirect(url_for("rentals"))
 
         data = (
@@ -272,6 +335,7 @@ def rentals():
     if edit_id:
         edit_rental = query_one("SELECT * FROM rentals WHERE id = ?", (edit_id,))
 
+    sync_all_camera_status()
     selected_user_id = request.args.get("user_id", "")
     users_list = query_all("SELECT * FROM users ORDER BY name")
     cameras_list = query_all("SELECT * FROM cameras ORDER BY brand, model")
